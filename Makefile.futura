@@ -1,0 +1,98 @@
+# Native YASM 1.3.0 build for FuturaOS.
+YASM_DIR := third_party/yasm-1.3.0
+YASM_BUILD := .build/yasm
+YASM_CFLAGS := $(CFLAGS) -DFUTURAOS -DHAVE_CONFIG_H -I$(YASM_DIR)/futura -I$(YASM_DIR) -I$(YASM_DIR)/libyasm -I$(YASM_DIR)/modules -I$(YASM_DIR)/modules/arch/x86
+YASM_LDFLAGS := $(LDFLAGS)
+YASM_SRCS := \
+	$(YASM_DIR)/libyasm/assocdat.c \
+	$(YASM_DIR)/libyasm/bc-align.c \
+	$(YASM_DIR)/libyasm/bc-data.c \
+	$(YASM_DIR)/libyasm/bc-incbin.c \
+	$(YASM_DIR)/libyasm/bc-org.c \
+	$(YASM_DIR)/libyasm/bc-reserve.c \
+	$(YASM_DIR)/libyasm/bitvect.c \
+	$(YASM_DIR)/libyasm/bytecode.c \
+	$(YASM_DIR)/libyasm/cmake-module.c \
+	$(YASM_DIR)/libyasm/errwarn.c \
+	$(YASM_DIR)/libyasm/expr.c \
+	$(YASM_DIR)/libyasm/file.c \
+	$(YASM_DIR)/libyasm/floatnum.c \
+	$(YASM_DIR)/libyasm/hamt.c \
+	$(YASM_DIR)/libyasm/insn.c \
+	$(YASM_DIR)/libyasm/intnum.c \
+	$(YASM_DIR)/libyasm/inttree.c \
+	$(YASM_DIR)/libyasm/linemap.c \
+	$(YASM_DIR)/libyasm/md5.c \
+	$(YASM_DIR)/libyasm/mergesort.c \
+	$(YASM_DIR)/libyasm/phash.c \
+	$(YASM_DIR)/libyasm/section.c \
+	$(YASM_DIR)/libyasm/strcasecmp.c \
+	$(YASM_DIR)/libyasm/strsep.c \
+	$(YASM_DIR)/libyasm/symrec.c \
+	$(YASM_DIR)/libyasm/valparam.c \
+	$(YASM_DIR)/libyasm/value.c \
+	$(YASM_DIR)/libyasm/xmalloc.c \
+	$(YASM_DIR)/libyasm/xstrdup.c \
+		$(YASM_DIR)/modules/arch/x86/x86arch.c \
+	$(YASM_DIR)/modules/arch/x86/x86bc.c \
+	$(YASM_DIR)/modules/arch/x86/x86expr.c \
+	$(YASM_DIR)/modules/arch/x86/x86id.c \
+	$(YASM_DIR)/modules/arch/x86/x86cpu.c \
+	$(YASM_DIR)/modules/arch/x86/x86regtmod.c \
+	$(YASM_DIR)/modules/dbgfmts/dwarf2/dwarf2-aranges.c \
+	$(YASM_DIR)/modules/dbgfmts/dwarf2/dwarf2-dbgfmt.c \
+	$(YASM_DIR)/modules/dbgfmts/dwarf2/dwarf2-info.c \
+	$(YASM_DIR)/modules/dbgfmts/dwarf2/dwarf2-line.c \
+	$(YASM_DIR)/modules/dbgfmts/null/null-dbgfmt.c \
+	$(YASM_DIR)/modules/dbgfmts/stabs/stabs-dbgfmt.c \
+	$(YASM_DIR)/modules/listfmts/nasm/nasm-listfmt.c \
+	$(YASM_DIR)/modules/objfmts/bin/bin-objfmt.c \
+	$(YASM_DIR)/modules/objfmts/dbg/dbg-objfmt.c \
+	$(YASM_DIR)/modules/objfmts/elf/elf-objfmt.c \
+	$(YASM_DIR)/modules/objfmts/elf/elf-x86-amd64.c \
+	$(YASM_DIR)/modules/objfmts/elf/elf-x86-x32.c \
+	$(YASM_DIR)/modules/objfmts/elf/elf-x86-x86.c \
+	$(YASM_DIR)/modules/objfmts/elf/elf.c \
+	$(YASM_DIR)/modules/objfmts/macho/macho-objfmt.c \
+	$(YASM_DIR)/modules/parsers/gas/gas-parse-intel.c \
+	$(YASM_DIR)/modules/parsers/gas/gas-parse.c \
+	$(YASM_DIR)/modules/parsers/gas/gas-parser.c \
+	$(YASM_DIR)/modules/parsers/gas/gas-token.c \
+	$(YASM_DIR)/modules/parsers/nasm/nasm-parse.c \
+	$(YASM_DIR)/modules/parsers/nasm/nasm-parser.c \
+	$(YASM_DIR)/modules/parsers/nasm/nasm-token.c \
+	$(YASM_DIR)/modules/preprocs/cpp/cpp-preproc.c \
+	$(YASM_DIR)/modules/preprocs/gas/gas-eval.c \
+	$(YASM_DIR)/modules/preprocs/gas/gas-preproc.c \
+	$(YASM_DIR)/modules/preprocs/nasm/nasm-eval.c \
+	$(YASM_DIR)/modules/preprocs/nasm/nasm-pp.c \
+	$(YASM_DIR)/modules/preprocs/nasm/nasm-preproc.c \
+	$(YASM_DIR)/modules/preprocs/nasm/nasmlib.c \
+	$(YASM_DIR)/modules/preprocs/raw/raw-preproc.c \
+	$(YASM_DIR)/frontends/yasm/yasm-options.c \
+	$(YASM_DIR)/frontends/yasm/yasm-plugin.c \
+	$(YASM_DIR)/frontends/yasm/yasm.c \
+	$(YASM_DIR)/futura/init_plugin.c $(YASM_DIR)/futura/license.c
+YASM_OBJS := $(patsubst $(YASM_DIR)/%.c,$(YASM_BUILD)/%.o,$(YASM_SRCS))
+
+.PHONY: futura-yasm
+futura-yasm: $(BASE)/usr/bin/yasm $(BASE)/usr/bin/m4
+
+$(YASM_BUILD)/%.o: $(YASM_DIR)/%.c $(YASM_DIR)/futura/config.h
+	@mkdir -p $(dir $@)
+	$(CC) $(YASM_CFLAGS) -c $< -o $@
+
+$(BASE)/usr/bin/yasm: $(YASM_OBJS) | $(LC) dirs
+	@mkdir -p $(dir $@)
+	$(CC) $(YASM_CFLAGS) -o $@ $(YASM_OBJS) $(YASM_LDFLAGS) -lc
+
+# m4 is built here as part of the isolated third_party tool package.
+M4_DIR := third_party/m4
+M4_BUILD := .build/m4
+M4_CFLAGS := $(CFLAGS) -DFUTURAOS
+$(M4_BUILD)/m4.o: $(M4_DIR)/futura/m4.c
+	@mkdir -p $(dir $@)
+	$(CC) $(M4_CFLAGS) -c $< -o $@
+$(BASE)/usr/bin/m4: $(M4_BUILD)/m4.o | $(LC) dirs
+	@mkdir -p $(dir $@)
+	$(CC) $(M4_CFLAGS) -o $@ $< -lc
